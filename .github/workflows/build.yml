@@ -1,4 +1,4 @@
-name: Android Build
+name: Build APK
 
 on:
   push:
@@ -10,13 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Setup Android SDK
@@ -24,8 +24,9 @@ jobs:
 
       - name: Create debug keystore
         run: |
-          keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey \
-            -keyalg RSA -keysize 2048 -validity 10000 \
+          mkdir -p app/keystore
+          keytool -genkeypair -v -keystore app/keystore/debug.keystore \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
 
@@ -33,41 +34,22 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-      - name: Create gradle.properties
-        run: |
-          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> gradle.properties
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "kotlin.code.style=official" >> gradle.properties
-
-      - name: Create app signing config
-        run: |
-          cat > app/signing.properties << EOF
-          storeFile=debug.keystore
-          storePassword=android
-          keyAlias=androiddebugkey
-          keyPassword=android
-          EOF
-
-      - name: Build debug APK (ARM64 v8)
+      - name: Build debug APK (ARM64-v8)
         run: |
           ./gradlew assembleDebug \
-            -Pandroid.arch=arm64-v8a \
-            -PsigningConfig=debug
+            -Dorg.gradle.jvmargs="-Xmx4g" \
+            --stacktrace
 
-      - name: Build release APK (ARM64 v8)
+      - name: Build release APK (ARM64-v8)
         run: |
           ./gradlew assembleRelease \
-            -Pandroid.arch=arm64-v8a \
-            -PsigningConfig=debug
+            -Dorg.gradle.jvmargs="-Xmx4g" \
+            --stacktrace
 
-      - name: Upload debug APK
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk-arm64-v8
-          path: app/build/outputs/apk/debug/*.apk
-
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk-arm64-v8
-          path: app/build/outputs/apk/release/*.apk
+          name: apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
