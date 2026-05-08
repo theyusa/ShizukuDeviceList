@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ShizukuDeviceList"
-include ':app'
+include(":app")
