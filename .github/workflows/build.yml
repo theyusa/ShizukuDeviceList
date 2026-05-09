@@ -27,24 +27,19 @@ jobs:
       - name: Determine next version
         id: version
         run: |
-          # Get last version tag, default to v1.0.0 if none exists
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
           echo "Last tag: $LAST_TAG"
-          
-          # Extract version number without 'v'
+
           VER_NUM=$(echo $LAST_TAG | sed 's/v//')
           echo "Current version: $VER_NUM"
-          
-          # Split into parts
+
           IFS='.' read -ra VER <<< "$VER_NUM"
           MAJOR=${VER[0]:-1}
           MINOR=${VER[1]:-0}
           PATCH=${VER[2]:-0}
-          
-          # Increment patch
+
           PATCH=$((PATCH + 1))
-          
-          # If patch reaches 10, reset to 0 and increment minor
+
           if [ $PATCH -ge 10 ]; then
             PATCH=0
             MINOR=$((MINOR + 1))
@@ -53,7 +48,7 @@ jobs:
               MAJOR=$((MAJOR + 1))
             fi
           fi
-          
+
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "New version: $NEW_VERSION"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -61,11 +56,6 @@ jobs:
       - name: Update version in build.gradle.kts
         run: |
           sed -i "s/versionName = \".*\"/versionName = \"v${{ steps.version.outputs.VERSION }}\"/" app/build.gradle.kts
-          echo "Updated app/build.gradle.kts"
-
-      - name: Show current version
-        run: |
-          grep "versionName" app/build.gradle.kts
 
       - name: Create git tag and commit
         run: |
@@ -74,7 +64,7 @@ jobs:
           git add -A
           git commit -m "Version bump to v${{ steps.version.outputs.VERSION }}"
           git tag "v${{ steps.version.outputs.VERSION }}"
-          git push origin main --tags || echo "Push failed, continuing..."
+          git push origin main --tags || echo "Push failed"
 
       - name: Create debug keystore
         run: |
@@ -103,10 +93,13 @@ jobs:
         run: |
           ./gradlew assembleRelease --stacktrace
 
-      - name: Upload APKs
-        uses: actions/upload-artifact@v4
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: shizuku-device-list-v${{ steps.version.outputs.VERSION }}
-          path: |
-            app/build/outputs/apk/debug/*.apk
+          files: |
             app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
