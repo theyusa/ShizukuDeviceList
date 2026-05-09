@@ -99,6 +99,7 @@ jobs:
           files: |
             app/build/outputs/apk/release/*.apk
             app/build/outputs/apk/debug/*.apk
+          tag_name: v${{ steps.version.outputs.VERSION }}
           draft: false
           prerelease: false
         env:
