@@ -1,16 +1,15 @@
 package com.shizuku.device.ui.screens
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shizuku.device.data.model.Device
 import com.shizuku.device.data.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import rikka.shizuku.Shizuku
 import javax.inject.Inject
 
 data class DeviceListUiState(
@@ -22,8 +21,7 @@ data class DeviceListUiState(
 
 @HiltViewModel
 class DeviceListViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository,
-    @ApplicationContext private val context: Context
+    private val deviceRepository: DeviceRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceListUiState())
@@ -35,10 +33,7 @@ class DeviceListViewModel @Inject constructor(
 
     fun checkShizuku() {
         val available = try {
-            val shizukuClass = Class.forName("rikka.shizuku.Shizuku")
-            val pingMethod = shizukuClass.getMethod("pingBinder")
-            val result = pingMethod.invoke(null)
-            result as Boolean
+            Shizuku.pingBinder()
         } catch (e: Exception) {
             false
         }
@@ -66,9 +61,7 @@ class DeviceListViewModel @Inject constructor(
 
     fun requestShizukuPermission() {
         try {
-            val shizukuClass = Class.forName("rikka.shizuku.Shizuku")
-            val requestMethod = shizukuClass.getMethod("requestPermission", Int::class.javaPrimitiveType)
-            requestMethod.invoke(null, 0)
+            Shizuku.requestPermission(0)
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(error = e.message)
         }
