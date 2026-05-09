@@ -78,7 +78,8 @@ android {
 }
 
 dependencies {
-    // Shizuku - runtime only
+    // Shizuku
+    implementation("com.github.RikkaApps:Shizuku-API:v12.1.0")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
