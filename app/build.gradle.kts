@@ -79,7 +79,7 @@ android {
 
 dependencies {
     // Shizuku
-    implementation("moe.shizuku.privileged:api:13")
+    implementation("dev.rikka.shizuku:api:12")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
