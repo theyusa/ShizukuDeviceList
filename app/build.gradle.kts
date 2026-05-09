@@ -79,7 +79,7 @@ android {
 
 dependencies {
     // Shizuku
-    implementation("dev.rikka.shizuku:api:12")
+    implementation("com.github.RikkaApps:Shizuku-API:v12")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
