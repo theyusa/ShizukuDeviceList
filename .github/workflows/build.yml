@@ -77,12 +77,14 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           CHANGES=$(git status --porcelain)
           if [ -z "$CHANGES" ]; then
-            echo "No changes to commit, skipping tag creation"
+            echo "No changes to commit, skipping"
             exit 0
           fi
           git add -A
           git commit -m "Version bump to v${{ steps.version.outputs.VERSION }}"
-          git tag "v${{ steps.version.outputs.VERSION }}"
+          # Delete existing tag if exists
+          git tag -d v${{ steps.version.outputs.VERSION }} 2>/dev/null || true
+          git tag v${{ steps.version.outputs.VERSION }}
           git push origin main --tags || echo "Push failed"
 
       - name: Create debug keystore
