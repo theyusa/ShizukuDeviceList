@@ -56,6 +56,12 @@ fun DeviceListScreen(
                         onRetry = { viewModel.checkShizuku() }
                     )
                 }
+                uiState.error != null -> {
+                    ErrorCard(
+                        error = uiState.error!!,
+                        onRetry = { viewModel.checkShizuku() }
+                    )
+                }
             }
 
             when {
@@ -171,6 +177,36 @@ fun ShizukuNotAvailableCard(
             Text(
                 text = "Shizuku Bağlı Değil",
                 style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = onRetry) {
+                Text("Yeniden Dene")
+            }
+        }
+    }
+}
+
+@Composable
+fun ErrorCard(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Hata: $error",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
             Spacer(modifier = Modifier.height(8.dp))

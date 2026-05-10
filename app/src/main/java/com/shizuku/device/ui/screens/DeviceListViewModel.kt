@@ -1,5 +1,6 @@
 package com.shizuku.device.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shizuku.device.data.model.Device
@@ -29,10 +30,12 @@ class DeviceListViewModel @Inject constructor(
     val uiState: StateFlow<DeviceListUiState> = _uiState.asStateFlow()
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
+        Log.d("ShizukuDevice", "Binder received")
         checkShizuku()
     }
 
     private val binderDeadListener = Shizuku.OnBinderDeadListener {
+        Log.d("ShizukuDevice", "Binder dead")
         _uiState.value = _uiState.value.copy(
             shizukuAvailable = false,
             shizukuPermissionGranted = false
@@ -40,6 +43,7 @@ class DeviceListViewModel @Inject constructor(
     }
 
     private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+        Log.d("ShizukuDevice", "Permission result: $grantResult")
         _uiState.value = _uiState.value.copy(
             shizukuPermissionGranted = grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED
         )
@@ -49,6 +53,7 @@ class DeviceListViewModel @Inject constructor(
     }
 
     init {
+        Log.d("ShizukuDevice", "ViewModel init")
         Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
         Shizuku.addRequestPermissionResultListener(permissionResultListener)
@@ -56,28 +61,35 @@ class DeviceListViewModel @Inject constructor(
     }
 
     fun checkShizuku() {
-        val available = try {
+        val pingResult = try {
             Shizuku.pingBinder()
         } catch (e: Exception) {
+            Log.e("ShizukuDevice", "pingBinder failed", e)
             false
         }
+        Log.d("ShizukuDevice", "pingBinder result: $pingResult")
 
-        val hasPermission = if (available) {
+        val permissionResult = if (pingResult) {
             try {
-                Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+                val result = Shizuku.checkSelfPermission()
+                Log.d("ShizukuDevice", "checkSelfPermission result: $result")
+                result == android.content.pm.PackageManager.PERMISSION_GRANTED
             } catch (e: Exception) {
+                Log.e("ShizukuDevice", "checkSelfPermission failed", e)
                 false
             }
         } else {
             false
         }
 
+        Log.d("ShizukuDevice", "Available: $pingResult, Permission: $permissionResult")
+
         _uiState.value = _uiState.value.copy(
-            shizukuAvailable = available,
-            shizukuPermissionGranted = hasPermission
+            shizukuAvailable = pingResult,
+            shizukuPermissionGranted = permissionResult
         )
 
-        if (available && hasPermission) {
+        if (pingResult && permissionResult) {
             loadDevices()
         }
     }
@@ -101,9 +113,11 @@ class DeviceListViewModel @Inject constructor(
     }
 
     fun requestShizukuPermission() {
+        Log.d("ShizukuDevice", "Requesting permission")
         try {
             Shizuku.requestPermission(0)
         } catch (e: Exception) {
+            Log.e("ShizukuDevice", "requestPermission failed", e)
             _uiState.value = _uiState.value.copy(error = e.message)
         }
     }
