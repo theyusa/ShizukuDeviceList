@@ -45,11 +45,17 @@ fun DeviceListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (!uiState.shizukuAvailable) {
-                ShizukuNotAvailableCard(
-                    onRequestPermission = { viewModel.requestShizukuPermission() },
-                    onRetry = { viewModel.checkShizuku() }
-                )
+            when {
+                uiState.shizukuAvailable && !uiState.shizukuPermissionGranted -> {
+                    ShizukuPermissionCard(
+                        onRequestPermission = { viewModel.requestShizukuPermission() }
+                    )
+                }
+                !uiState.shizukuAvailable -> {
+                    ShizukuNotAvailableCard(
+                        onRetry = { viewModel.checkShizuku() }
+                    )
+                }
             }
 
             when {
@@ -61,10 +67,10 @@ fun DeviceListScreen(
                         CircularProgressIndicator()
                     }
                 }
-                uiState.devices.isEmpty() -> {
+                uiState.shizukuPermissionGranted && uiState.devices.isEmpty() -> {
                     EmptyDeviceMessage()
                 }
-                else -> {
+                uiState.shizukuPermissionGranted -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
@@ -109,7 +115,7 @@ fun DeviceCard(device: Device) {
                 )
                 Text(
                     text = "MAC: ${device.mac}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.colorScheme.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -118,8 +124,36 @@ fun DeviceCard(device: Device) {
 }
 
 @Composable
+fun ShizukuPermissionCard(
+    onRequestPermission: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Shizuku İzni Gerekli",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onRequestPermission) {
+                Text("İzin Ver")
+            }
+        }
+    }
+}
+
+@Composable
 fun ShizukuNotAvailableCard(
-    onRequestPermission: () -> Unit,
     onRetry: () -> Unit
 ) {
     Card(
@@ -140,13 +174,8 @@ fun ShizukuNotAvailableCard(
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onRequestPermission) {
-                    Text("İzin İste")
-                }
-                OutlinedButton(onClick = onRetry) {
-                    Text("Yeniden Dene")
-                }
+            OutlinedButton(onClick = onRetry) {
+                Text("Yeniden Dene")
             }
         }
     }

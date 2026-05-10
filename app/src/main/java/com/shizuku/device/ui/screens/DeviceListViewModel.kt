@@ -1,5 +1,6 @@
 package com.shizuku.device.ui.screens
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shizuku.device.data.model.Device
@@ -16,6 +17,7 @@ data class DeviceListUiState(
     val devices: List<Device> = emptyList(),
     val isLoading: Boolean = false,
     val shizukuAvailable: Boolean = false,
+    val shizukuPermissionGranted: Boolean = false,
     val error: String? = null
 )
 
@@ -27,18 +29,41 @@ class DeviceListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(DeviceListUiState())
     val uiState: StateFlow<DeviceListUiState> = _uiState.asStateFlow()
 
-    init {
+    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         checkShizuku()
     }
 
-    fun checkShizuku() {
+    private val binderDeadListener = Shizuku.OnBinderDeadListener {
+        _uiState.value = _uiState.value.copy(
+            shizukuAvailable = false,
+            shizukuPermissionGranted = false
+        )
+    }
+
+    private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+        if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            _uiState.value = _uiState.value.copy(shizukuPermissionGranted = true)
+            loadDevices()
+        }
+    }
+
+    init {
+        Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
+        Shizuku.addBinderDeadListener(binderDeadListener)
+        Shizuku.addRequestPermissionResultListener(permissionResultListener)
+        checkShizuku()
+    }
+
+    private fun checkShizuku() {
         val available = try {
             Shizuku.pingBinder()
         } catch (e: Exception) {
             false
         }
         _uiState.value = _uiState.value.copy(shizukuAvailable = available)
-        loadDevices()
+        if (available) {
+            loadDevices()
+        }
     }
 
     fun loadDevices() {
@@ -65,5 +90,12 @@ class DeviceListViewModel @Inject constructor(
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(error = e.message)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+        Shizuku.removeBinderDeadListener(binderDeadListener)
+        Shizuku.removeRequestPermissionResultListener(permissionResultListener)
     }
 }
