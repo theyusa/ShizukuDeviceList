@@ -94,6 +94,10 @@ class DeviceListViewModel @Inject constructor(
         }
     }
 
+    fun refreshPermissionState() {
+        checkShizuku()
+    }
+
     fun loadDevices() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
