@@ -39,9 +39,11 @@ class DeviceListViewModel @Inject constructor(
         )
     }
 
-    private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+    private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+        _uiState.value = _uiState.value.copy(
+            shizukuPermissionGranted = grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
         if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            _uiState.value = _uiState.value.copy(shizukuPermissionGranted = true)
             loadDevices()
         }
     }
@@ -59,8 +61,23 @@ class DeviceListViewModel @Inject constructor(
         } catch (e: Exception) {
             false
         }
-        _uiState.value = _uiState.value.copy(shizukuAvailable = available)
-        if (available) {
+
+        val hasPermission = if (available) {
+            try {
+                Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+            } catch (e: Exception) {
+                false
+            }
+        } else {
+            false
+        }
+
+        _uiState.value = _uiState.value.copy(
+            shizukuAvailable = available,
+            shizukuPermissionGranted = hasPermission
+        )
+
+        if (available && hasPermission) {
             loadDevices()
         }
     }
