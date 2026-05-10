@@ -104,10 +104,6 @@ jobs:
           echo "kotlin.code.style=official" >> gradle.properties
           echo "android.nonTransitiveRClass=true" >> gradle.properties
 
-      - name: Build debug APK (ARM64-v8)
-        run: |
-          ./gradlew assembleDebug --stacktrace
-
       - name: Build release APK (ARM64-v8)
         run: |
           ./gradlew assembleRelease --stacktrace

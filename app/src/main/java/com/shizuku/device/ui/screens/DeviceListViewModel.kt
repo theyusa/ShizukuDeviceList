@@ -53,7 +53,7 @@ class DeviceListViewModel @Inject constructor(
         checkShizuku()
     }
 
-    private fun checkShizuku() {
+    fun checkShizuku() {
         val available = try {
             Shizuku.pingBinder()
         } catch (e: Exception) {

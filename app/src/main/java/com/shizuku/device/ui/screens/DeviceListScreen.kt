@@ -115,7 +115,7 @@ fun DeviceCard(device: Device) {
                 )
                 Text(
                     text = "MAC: ${device.mac}",
-                    style = MaterialTheme.colorScheme.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
