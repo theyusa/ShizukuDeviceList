@@ -1,6 +1,5 @@
 package com.shizuku.device.ui.screens
 
-import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shizuku.device.data.model.Device
